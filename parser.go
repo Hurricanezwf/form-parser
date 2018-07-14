@@ -6,28 +6,33 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 const pkgName = "formparser"
 
 // FormParser 将结构体对象转换成HTTP请求所需的KV形式, 只处理struct及*struct类型
 //
-// "..." 表示该字段的子字段不继承父辈的标签, 该方式可用于struct，map类型
-// 例如:
-// type Demo1 struct {
-//		Auth 		`zwf:"..."`
-// }
+// > 关键字"..." 表示该字段的子字段不继承父辈的标签, 该方式可用于struct，map类型
+// 	 例如:
+// 	 type Demo1 struct {
+//	 		Auth 		`zwf:"..."`
+// 	 }
 //
-// type Demo2 struct {
-//		Auth		`zwf:"auth"`
-// }
+// 	 type Demo2 struct {
+//	 		Auth		`zwf:"auth"`
+// 	 }
 //
-// type Auth struct {
-//		AK *string	`zwf:"ak"`
-//}
+// 	 type Auth struct {
+// 	  	AK *string	`zwf:"ak"`
+//	 }
 //
-// Demo1: "ak"="xxx"
-// Demo2: "auth.ak"="xxx"
+// 	 Demo1: "ak"="xxx"
+// 	 Demo2: "auth.ak"="xxx"
+//
+//
+// > 关键字"join" 可以将[]string进行按英文逗号join操作, 参见parser_test.go的TestParse例子
+//
 type FormParser struct {
 	// 用于转换的tag名字, 类似于json序列化的json tag
 	tag string
@@ -230,10 +235,17 @@ func (p *FormParser) encodeSlice(v reflect.Value, tagK string) (rt []KV) {
 	// 如果是[]byte，则进行base64后做成KV
 	b, isBytes := v.Interface().([]byte)
 	if isBytes == true {
-		rt = append(rt, KV{tagK, base64.StdEncoding.EncodeToString(b)})
-		return rt
+		return append(rt, KV{tagK, base64.StdEncoding.EncodeToString(b)})
 	}
-	// 如果是非[]byte，则将每个元素单独做成KV
+	// 如果是[]string,并且tagList[1]为“join”
+	strList, isStrList := v.Interface().([]string)
+	if isStrList {
+		tagList := strings.Split(tagK, ",")
+		if len(tagList) > 1 && tagList[1] == "join" {
+			return append(rt, KV{tagList[0], strings.Join(strList, ",")})
+		}
+	}
+	// 如果是非以上情况，则将每个元素单独做成KV
 	for i := 0; i < v.Len(); i++ {
 		rt = append(rt, p.encode(v.Index(i), fmt.Sprintf("%s.%d", tagK, i))...)
 	}

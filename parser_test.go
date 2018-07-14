@@ -25,6 +25,7 @@ var h = Hello{
 	},
 	J: []byte("Golang"),
 	K: Info{CPU: StringPtr("2核")},
+	L: []string{"hello", "ladies", "gentlemen"},
 }
 
 func TestParse(t *testing.T) {
@@ -60,6 +61,7 @@ type Hello struct {
 	I map[string]*string `a:"i"`
 	J []byte             `a:"j"`
 	K Info               `a:"..."`
+	L []string           `a:"l,join"`
 }
 
 type Info struct {

@@ -10,8 +10,24 @@ import (
 
 const pkgName = "formparser"
 
-// FormParser 将结构体对象转换成HTTP请求所需的KV形式
-// 只处理struct及*struct类型
+// FormParser 将结构体对象转换成HTTP请求所需的KV形式, 只处理struct及*struct类型
+//
+// "..." 表示该字段的子字段不继承父辈的标签, 该方式可用于struct，map类型
+// 例如:
+// type Demo1 struct {
+//		Auth 		`zwf:"..."`
+// }
+//
+// type Demo2 struct {
+//		Auth		`zwf:"auth"`
+// }
+//
+// type Auth struct {
+//		AK *string	`zwf:"ak"`
+//}
+//
+// Demo1: "ak"="xxx"
+// Demo2: "auth.ak"="xxx"
 type FormParser struct {
 	// 用于转换的tag名字, 类似于json序列化的json tag
 	tag string
@@ -230,7 +246,9 @@ func (p *FormParser) encodeStruct(v reflect.Value, tagK string) (rt []KV) {
 		panic(fmt.Sprintf("Parse value for tagK(%s) failed, %v", tagK, err))
 	}
 	for i, kv := range kvs {
-		kv.K = tagK + "." + kv.K
+		if tagK != "..." { // 不继承父辈标签
+			kv.K = tagK + "." + kv.K
+		}
 		kvs[i] = kv
 	}
 	rt = kvs
@@ -244,10 +262,15 @@ func (p *FormParser) encodeMap(v reflect.Value, tagK string) (rt []KV) {
 		valPair := p.encode(v.MapIndex(k), "")
 		for _, key := range keyPair {
 			for _, val := range valPair {
-				rt = append(rt, KV{
-					K: tagK + "." + key.V,
-					V: val.V,
-				})
+				var a KV
+				if tagK == "..." { // 不继承父辈标签
+					a.K = key.V
+					a.V = val.V
+				} else {
+					a.K = tagK + "." + key.V
+					a.V = val.V
+				}
+				rt = append(rt, a)
 			}
 		}
 	}

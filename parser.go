@@ -27,7 +27,7 @@ func Default() *FormParser {
 	return NewFormParser("zwf", "-")
 }
 
-func NewFormParser(tag, ignoreFlag string) *FormParser {
+func New(tag, ignoreFlag string) *FormParser {
 	if len(tag) <= 0 {
 		panic(fmt.Sprintf("%s: Missing `tag` value", pkgName))
 	}

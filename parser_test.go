@@ -27,7 +27,7 @@ var h = Hello{
 }
 
 func TestParse(t *testing.T) {
-	p := NewFormParser("a", "-")
+	p := New("a", "-")
 	_, err := p.parse(reflect.ValueOf(h))
 	if err != nil {
 		t.Fatalf(err.Error())
@@ -36,7 +36,7 @@ func TestParse(t *testing.T) {
 }
 
 func BenchmarkParse(b *testing.B) {
-	p := NewFormParser("a", "-")
+	p := New("a", "-")
 	for i := 0; i < b.N; i++ {
 		_, err := p.parse(reflect.ValueOf(h))
 		if err != nil {

@@ -24,7 +24,7 @@ type FormParser struct {
 }
 
 func Default() *FormParser {
-	return NewFormParser("zwf", "-")
+	return New("zwf", "-")
 }
 
 func New(tag, ignoreFlag string) *FormParser {
